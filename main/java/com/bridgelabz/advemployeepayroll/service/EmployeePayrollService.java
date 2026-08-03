@@ -433,11 +433,8 @@ public class EmployeePayrollService {
             throws SQLException {
 
         double deductions = basicPay * 0.20;
-
         double taxablePay = basicPay - deductions;
-
         double incomeTax = taxablePay * 0.10;
-
         double netPay = basicPay - incomeTax;
 
         String sql = """
@@ -455,15 +452,10 @@ public class EmployeePayrollService {
                      connection.prepareStatement(sql)) {
 
             statement.setInt(1, employeeId);
-
             statement.setDouble(2, basicPay);
-
             statement.setDouble(3, deductions);
-
             statement.setDouble(4, taxablePay);
-
             statement.setDouble(5, incomeTax);
-
             statement.setDouble(6, netPay);
 
             statement.executeUpdate();
@@ -506,7 +498,7 @@ public class EmployeePayrollService {
                 connection.rollback();
 
                 System.out.println(
-                        "Transaction Rolled Back.");
+                        "Transaction rolled back.");
 
             } catch (SQLException ex) {
 
