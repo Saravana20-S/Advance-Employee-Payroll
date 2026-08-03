@@ -1,0 +1,6 @@
+CREATE TABLE employee_payroll (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    salary DECIMAL(10,2) NOT NULL,
+    start_date DATE NOT NULL
+);
