@@ -5,6 +5,7 @@ import com.bridgelabz.advemployeepayroll.model.PayrollStatistics;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -49,5 +50,31 @@ class EmployeePayrollServiceTest {
         Assertions.assertFalse(((List<?>) statistics).isEmpty());
 
         Assertions.assertEquals(2, statistics.size());
+    }
+
+    @Test
+    void givenNewEmployee_WhenAdded_ShouldSyncWithDatabase() {
+
+        EmployeePayroll employee =
+                payrollService.addEmployee(
+
+                        "Rahul",
+
+                        'M',
+
+                        4500000,
+
+                        LocalDate.now(),
+
+                        1);
+
+        Assertions.assertNotNull(employee);
+
+        Assertions.assertTrue(
+
+                payrollService
+                        .checkEmployeePayrollInSync(employee)
+
+        );
     }
 }

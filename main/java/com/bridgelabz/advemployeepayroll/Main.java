@@ -24,12 +24,12 @@ public class Main {
 
         try {
 
-            // Load PostgreSQL Driver
+            // Load PostgreSQL JDBC Driver
             Class.forName("org.postgresql.Driver");
 
             System.out.println("PostgreSQL Driver Loaded Successfully.\n");
 
-            // Display Registered JDBC Drivers
+            // Display all registered JDBC Drivers
             System.out.println("Registered JDBC Drivers:");
 
             Enumeration<Driver> drivers =
@@ -41,26 +41,55 @@ public class Main {
 
             System.out.println();
 
+            // Establish Database Connection
             Connection connection = DBConnection.getConnection();
 
             if (connection != null) {
 
-                System.out.println("Connected Successfully.\n");
+                System.out.println("Connected Successfully to payroll_service database.\n");
 
+                // Singleton Service Object
                 EmployeePayrollService payrollService =
                         EmployeePayrollService.getInstance();
 
-                // =============================
-                // UC2 : Read Employee Payroll
-                // =============================
-
-                List<EmployeePayroll> employeeList =
-                        payrollService.getEmployeePayrollList();
+                // ==================================================
+                // UC2 : Retrieve All Employee Payroll Records
+                // ==================================================
 
                 System.out.println("Employee Payroll Records");
                 System.out.println("------------------------");
 
+                List<EmployeePayroll> employeeList =
+                        payrollService.getEmployeePayrollList();
+
                 employeeList.forEach(System.out::println);
+
+                // ==================================================
+                // UC3 & UC4 : Update Employee Salary
+                // ==================================================
+
+                System.out.println("\nUpdating Terisa's Salary...");
+                System.out.println("---------------------------");
+
+                EmployeePayroll updatedEmployee =
+                        payrollService.updateEmployeeSalary(
+                                "Terisa",
+                                3000000.00);
+
+                if (updatedEmployee != null) {
+
+                    System.out.println("Salary Updated Successfully.");
+
+                    System.out.println(updatedEmployee);
+
+                } else {
+
+                    System.out.println("Salary Update Failed.");
+                }
+
+                // ==================================================
+                // UC5 : Retrieve Employees by Date Range
+                // ==================================================
 
                 System.out.println("\nEmployees Joined Between 2018-01-01 and Today");
                 System.out.println("---------------------------------------------");
@@ -72,6 +101,9 @@ public class Main {
 
                 employees.forEach(System.out::println);
 
+                // ==================================================
+                // UC6 : Payroll Statistics by Gender
+                // ==================================================
 
                 System.out.println("\nPayroll Statistics By Gender");
                 System.out.println("----------------------------");
@@ -80,43 +112,54 @@ public class Main {
                         .getPayrollStatisticsByGender()
                         .forEach(System.out::println);
 
-                // =============================
-                // UC3 & UC4 : Update Salary
-                // =============================
+                // ==================================================
+                // UC7 : Add New Employee
+                // ==================================================
 
-                EmployeePayroll employee =
-                        payrollService.updateEmployeeSalary(
-                                "Terisa",
-                                3000000.00);
+                System.out.println("\nAdding New Employee");
+                System.out.println("-------------------");
 
-                if (employee != null) {
+                EmployeePayroll newEmployee =
+                        payrollService.addEmployee(
 
-                    System.out.println("\nSalary Updated Successfully\n");
+                                "Rahul",
 
-                    System.out.println(employee);
+                                'M',
+
+                                4500000.00,
+
+                                LocalDate.now(),
+
+                                1        // Department Id
+
+                        );
+
+                if (newEmployee != null) {
+
+                    System.out.println("Employee Added Successfully.");
+
+                    System.out.println(newEmployee);
 
                 } else {
 
-                    System.out.println("\nSalary Update Failed");
-
+                    System.out.println("Unable to Add Employee.");
                 }
 
+                // Close Database Connection
                 connection.close();
 
                 System.out.println("\nDatabase Connection Closed.");
-
             }
 
         } catch (ClassNotFoundException e) {
 
-            System.out.println("Driver Not Found.");
+            System.out.println("PostgreSQL Driver Not Found.");
 
         } catch (SQLException e) {
 
+            System.out.println("Database Connection Failed.");
+
             e.printStackTrace();
-
         }
-
     }
-
 }

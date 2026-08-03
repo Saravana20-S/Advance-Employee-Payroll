@@ -4,10 +4,7 @@ import com.bridgelabz.advemployeepayroll.model.EmployeePayroll;
 import com.bridgelabz.advemployeepayroll.model.PayrollStatistics;
 import com.bridgelabz.advemployeepayroll.util.DBConnection;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -372,6 +369,116 @@ public class EmployeePayrollService {
         }
 
         return statistics;
+    }
+
+
+    /**
+     * Inserts employee details and returns generated employee id.
+     */
+    private int addEmployeeDetails(String name,
+                                   char gender,
+                                   LocalDate startDate)
+            throws SQLException {
+
+        String sql = """
+            INSERT INTO employee(name, gender, start_date)
+            VALUES (?, ?, ?)
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(
+                             sql,
+                             PreparedStatement.RETURN_GENERATED_KEYS)) {
+
+            statement.setString(1, name);
+            statement.setString(2, String.valueOf(gender));
+            statement.setDate(3, Date.valueOf(startDate));
+
+            statement.executeUpdate();
+
+            ResultSet generatedKeys =
+                    statement.getGeneratedKeys();
+
+            if (generatedKeys.next()) {
+                return generatedKeys.getInt(1);
+            }
+        }
+
+        return -1;
+    }
+
+    private void addPayrollDetails(int employeeId,
+                                   double basicPay)
+            throws SQLException {
+
+        String sql = """
+            INSERT INTO payroll(employee_id,basic_pay)
+            VALUES(?,?)
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setInt(1, employeeId);
+            statement.setDouble(2, basicPay);
+
+            statement.executeUpdate();
+        }
+    }
+
+    private void addEmployeeDepartment(int employeeId,
+                                       int departmentId)
+            throws SQLException {
+
+        String sql = """
+            INSERT INTO employee_department(employee_id,department_id)
+            VALUES(?,?)
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setInt(1, employeeId);
+            statement.setInt(2, departmentId);
+
+            statement.executeUpdate();
+        }
+    }
+
+    /**
+     * Adds a new employee to Payroll Service.
+     */
+    public EmployeePayroll addEmployee(String name,
+                                       char gender,
+                                       double basicPay,
+                                       LocalDate startDate,
+                                       int departmentId) {
+
+        try {
+
+            int employeeId =
+                    addEmployeeDetails(
+                            name,
+                            gender,
+                            startDate);
+
+            addPayrollDetails(
+                    employeeId,
+                    basicPay);
+
+            addEmployeeDepartment(
+                    employeeId,
+                    departmentId);
+
+            return getEmployeeByName(name);
+
+        } catch (SQLException e) {
+
+            e.printStackTrace();
+
+        }
+
+        return null;
     }
 
 }

@@ -12,6 +12,8 @@ public class EmployeePayroll {
     private double salary;
     private LocalDate startDate;
     private double basicPay;
+    private char gender;
+    private String department;
 
 
     /**
