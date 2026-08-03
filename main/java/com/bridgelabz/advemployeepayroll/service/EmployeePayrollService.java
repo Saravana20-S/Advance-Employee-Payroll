@@ -22,7 +22,7 @@ public class EmployeePayrollService {
      *
      * @return list of employee payroll objects
      */
-    public List<EmployeePayroll> getEmployeePayrollList() {
+    public List<EmployeePayroll> getEmployeePayrollList(String terisa) {
 
         List<EmployeePayroll> employeeList =
                 new ArrayList<>();
@@ -64,40 +64,101 @@ public class EmployeePayrollService {
     }
 
 
-    /**
-     * Updates the basic pay of an employee in the database.
-     *
-     * @param employeeName Employee name
-     * @param basicPay Updated basic pay
-     * @return true if updated successfully, otherwise false
-     */
-    public boolean updateEmployeeSalary(String employeeName, double basicPay) {
+    public EmployeePayroll getEmployeeByName(String name) {
 
         String sql = """
-            UPDATE payroll
-            SET basic_pay = ?
-            WHERE employee_id = (
-                SELECT employee_id
-                FROM employee
-                WHERE name = ?
-            )
+            SELECT
+                e.employee_id,
+                e.name,
+                p.basic_pay,
+                e.start_date
+            FROM employee e
+            JOIN payroll p
+            ON e.employee_id = p.employee_id
+            WHERE e.name = ?
             """;
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement =
                      connection.prepareStatement(sql)) {
 
-            preparedStatement.setDouble(1, basicPay);
-            preparedStatement.setString(2, employeeName);
+            preparedStatement.setString(1, name);
 
-            int rowsAffected = preparedStatement.executeUpdate();
+            ResultSet rs = preparedStatement.executeQuery();
 
-            return rowsAffected > 0;
+            if (rs.next()) {
+
+                return new EmployeePayroll(
+                        rs.getInt("employee_id"),
+                        rs.getString("name"),
+                        rs.getDouble("basic_pay"),
+                        rs.getDate("start_date").toLocalDate()
+                );
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        return false;
+        return null;
+    }
+
+
+    public EmployeePayroll updateEmployeeSalary(String employeeName,
+                                                double basicPay) {
+
+        String sql = """
+            UPDATE payroll
+            SET basic_pay=?
+            WHERE employee_id=
+            (
+                SELECT employee_id
+                FROM employee
+                WHERE name=?
+            )
+            """;
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement ps =
+                     connection.prepareStatement(sql)) {
+
+            ps.setDouble(1, basicPay);
+            ps.setString(2, employeeName);
+
+            int rows = ps.executeUpdate();
+
+            if (rows > 0) {
+
+                return getEmployeeByName(employeeName);
+
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     * Checks whether the employee object's salary
+     * is synchronized with the database.
+     *
+     * @param employee EmployeePayroll object
+     * @return true if object and database values match
+     */
+    public boolean checkEmployeePayrollInSync(EmployeePayroll employee) {
+
+        EmployeePayroll employeeFromDB =
+                getEmployeeByName(employee.getName());
+
+        if (employeeFromDB == null) {
+            return false;
+        }
+
+        return Double.compare(
+                employee.getBasicPay(),
+                employeeFromDB.getBasicPay()
+        ) == 0;
     }
 }

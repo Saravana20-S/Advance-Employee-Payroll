@@ -13,6 +13,7 @@ public class EmployeePayroll {
     private LocalDate startDate;
     private double basicPay;
 
+
     /**
      * Parameterized constructor.
      */
@@ -26,6 +27,14 @@ public class EmployeePayroll {
         this.salary = salary;
         this.startDate = startDate;
     }
+
+
+    public double getBasicPay() {
+        return basicPay;
+    }
+
+
+
 
     public int getId() {
         return id;
@@ -52,15 +61,14 @@ public class EmployeePayroll {
     public void setBasicPay(double basicPay) {
         this.basicPay = basicPay;
     }
-    
-    
+
+
     @Override
     public String toString() {
-
         return "EmployeePayroll{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", salary=" + salary +
+                ", basicPay=" + basicPay +
                 ", startDate=" + startDate +
                 '}';
     }

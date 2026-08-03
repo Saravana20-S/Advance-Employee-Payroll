@@ -54,7 +54,7 @@ public class Main {
                         new EmployeePayrollService();
 
                 List<EmployeePayroll> employeePayrollList =
-                        payrollService.getEmployeePayrollList();
+                        payrollService.getEmployeePayrollList("Terisa");
 
                 System.out.println("Employee Payroll Records");
                 System.out.println("-------------------------");
