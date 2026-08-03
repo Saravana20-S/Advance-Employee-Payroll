@@ -11,6 +11,7 @@ public class EmployeePayroll {
     private String name;
     private double salary;
     private LocalDate startDate;
+    private double basicPay;
 
     /**
      * Parameterized constructor.
@@ -42,6 +43,17 @@ public class EmployeePayroll {
         return startDate;
     }
 
+
+    /**
+     * Updates the employee's basic pay.
+     *
+     * @param basicPay updated basic pay
+     */
+    public void setBasicPay(double basicPay) {
+        this.basicPay = basicPay;
+    }
+    
+    
     @Override
     public String toString() {
 

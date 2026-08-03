@@ -61,6 +61,20 @@ public class Main {
 
                 employeePayrollList.forEach(System.out::println);
 
+
+                payrollService = new EmployeePayrollService();
+
+                boolean updated =
+                        payrollService.updateEmployeeSalary(
+                                "Terisa",
+                                3000000.00);
+
+                if (updated) {
+                    System.out.println("Salary updated successfully.");
+                } else {
+                    System.out.println("Salary update failed.");
+                }
+
                 // Close database connection
                 connection.close();
 

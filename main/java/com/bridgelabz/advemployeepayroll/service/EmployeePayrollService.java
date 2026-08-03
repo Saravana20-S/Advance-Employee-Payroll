@@ -62,4 +62,42 @@ public class EmployeePayrollService {
 
         return employeeList;
     }
+
+
+    /**
+     * Updates the basic pay of an employee in the database.
+     *
+     * @param employeeName Employee name
+     * @param basicPay Updated basic pay
+     * @return true if updated successfully, otherwise false
+     */
+    public boolean updateEmployeeSalary(String employeeName, double basicPay) {
+
+        String sql = """
+            UPDATE payroll
+            SET basic_pay = ?
+            WHERE employee_id = (
+                SELECT employee_id
+                FROM employee
+                WHERE name = ?
+            )
+            """;
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement =
+                     connection.prepareStatement(sql)) {
+
+            preparedStatement.setDouble(1, basicPay);
+            preparedStatement.setString(2, employeeName);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }
