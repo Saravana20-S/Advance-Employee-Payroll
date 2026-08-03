@@ -52,17 +52,18 @@ class EmployeePayrollServiceTest {
         Assertions.assertEquals(2, statistics.size());
     }
 
+
     @Test
     void givenNewEmployee_WhenAdded_ShouldSyncWithDatabase() {
 
         EmployeePayroll employee =
                 payrollService.addEmployee(
 
-                        "Rahul",
+                        "Kumar",
 
                         'M',
 
-                        4500000,
+                        5000000,
 
                         LocalDate.now(),
 

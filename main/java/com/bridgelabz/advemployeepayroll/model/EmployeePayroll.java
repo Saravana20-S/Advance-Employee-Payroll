@@ -14,7 +14,13 @@ public class EmployeePayroll {
     private double basicPay;
     private char gender;
     private String department;
+    private double deductions;
 
+    private double taxablePay;
+
+    private double incomeTax;
+
+    private double netPay;
 
     /**
      * Parameterized constructor.

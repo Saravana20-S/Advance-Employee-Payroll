@@ -407,25 +407,6 @@ public class EmployeePayrollService {
         return -1;
     }
 
-    private void addPayrollDetails(int employeeId,
-                                   double basicPay)
-            throws SQLException {
-
-        String sql = """
-            INSERT INTO payroll(employee_id,basic_pay)
-            VALUES(?,?)
-            """;
-
-        try (PreparedStatement statement =
-                     connection.prepareStatement(sql)) {
-
-            statement.setInt(1, employeeId);
-            statement.setDouble(2, basicPay);
-
-            statement.executeUpdate();
-        }
-    }
-
     private void addEmployeeDepartment(int employeeId,
                                        int departmentId)
             throws SQLException {
@@ -445,16 +426,60 @@ public class EmployeePayrollService {
         }
     }
 
-    /**
-     * Adds a new employee to Payroll Service.
-     */
-    public EmployeePayroll addEmployee(String name,
-                                       char gender,
-                                       double basicPay,
-                                       LocalDate startDate,
-                                       int departmentId) {
+
+    private void addPayrollDetails(
+            int employeeId,
+            double basicPay)
+            throws SQLException {
+
+        double deductions = basicPay * 0.20;
+
+        double taxablePay = basicPay - deductions;
+
+        double incomeTax = taxablePay * 0.10;
+
+        double netPay = basicPay - incomeTax;
+
+        String sql = """
+            INSERT INTO payroll(
+                employee_id,
+                basic_pay,
+                deductions,
+                taxable_pay,
+                income_tax,
+                net_pay)
+            VALUES(?,?,?,?,?,?)
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setInt(1, employeeId);
+
+            statement.setDouble(2, basicPay);
+
+            statement.setDouble(3, deductions);
+
+            statement.setDouble(4, taxablePay);
+
+            statement.setDouble(5, incomeTax);
+
+            statement.setDouble(6, netPay);
+
+            statement.executeUpdate();
+        }
+    }
+
+    public EmployeePayroll addEmployee(
+            String name,
+            char gender,
+            double basicPay,
+            LocalDate startDate,
+            int departmentId) {
 
         try {
+
+            connection.setAutoCommit(false);
 
             int employeeId =
                     addEmployeeDetails(
@@ -470,11 +495,38 @@ public class EmployeePayrollService {
                     employeeId,
                     departmentId);
 
+            connection.commit();
+
             return getEmployeeByName(name);
 
         } catch (SQLException e) {
 
+            try {
+
+                connection.rollback();
+
+                System.out.println(
+                        "Transaction Rolled Back.");
+
+            } catch (SQLException ex) {
+
+                ex.printStackTrace();
+
+            }
+
             e.printStackTrace();
+
+        } finally {
+
+            try {
+
+                connection.setAutoCommit(true);
+
+            } catch (SQLException e) {
+
+                e.printStackTrace();
+
+            }
 
         }
 
