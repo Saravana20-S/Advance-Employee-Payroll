@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -60,6 +61,16 @@ public class Main {
                 System.out.println("------------------------");
 
                 employeeList.forEach(System.out::println);
+
+                System.out.println("\nEmployees Joined Between 2018-01-01 and Today");
+                System.out.println("---------------------------------------------");
+
+                List<EmployeePayroll> employees =
+                        payrollService.getEmployeesByDateRange(
+                                LocalDate.of(2018, 1, 1),
+                                LocalDate.now());
+
+                employees.forEach(System.out::println);
 
                 // =============================
                 // UC3 & UC4 : Update Salary

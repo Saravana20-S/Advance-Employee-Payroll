@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,9 @@ public class EmployeePayrollService {
 
     // Cached PreparedStatement
     private PreparedStatement employeeByNameStatement;
+
+    // Cached PreparedStatement to retrieve employees by date range
+    private PreparedStatement employeeByDateRangeStatement;
 
     /**
      * Private constructor.
@@ -73,8 +77,24 @@ public class EmployeePayrollService {
                     WHERE e.name = ?
                     """;
 
-            employeeByNameStatement =
-                    connection.prepareStatement(employeeByNameQuery);
+            String employeeByDateRangeQuery = """
+        SELECT
+            e.employee_id,
+            e.name,
+            p.basic_pay,
+            e.start_date
+        FROM employee e
+        JOIN payroll p
+        ON e.employee_id = p.employee_id
+        WHERE e.start_date BETWEEN ? AND ?
+        ORDER BY e.start_date
+        """;
+
+            employeeByDateRangeStatement =
+                    connection.prepareStatement(employeeByDateRangeQuery);
+
+//            employeeByNameStatement =
+//                    connection.prepareStatement(employeeByNameQuery);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -243,6 +263,51 @@ public class EmployeePayrollService {
                         .toLocalDate()
 
         );
+    }
+
+
+
+    /**
+     * Retrieves all employees who joined
+     * between the given start and end dates.
+     *
+     * @param startDate starting date
+     * @param endDate ending date
+     * @return list of employees
+     */
+    public List<EmployeePayroll> getEmployeesByDateRange(
+            LocalDate startDate,
+            LocalDate endDate) {
+
+        List<EmployeePayroll> employeeList =
+                new ArrayList<>();
+
+        try {
+
+            employeeByDateRangeStatement.setDate(
+                    1,
+                    java.sql.Date.valueOf(startDate));
+
+            employeeByDateRangeStatement.setDate(
+                    2,
+                    java.sql.Date.valueOf(endDate));
+
+            ResultSet resultSet =
+                    employeeByDateRangeStatement.executeQuery();
+
+            while (resultSet.next()) {
+
+                employeeList.add(
+                        getEmployeePayrollData(resultSet)
+                );
+
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return employeeList;
     }
 
 }
