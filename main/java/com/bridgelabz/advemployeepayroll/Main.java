@@ -46,15 +46,15 @@ public class Main {
 
             if (connection != null) {
 
-                System.out.println("Connected Successfully to payroll_service database.\n");
+                System.out.println(
+                        "Connected Successfully to payroll_service database.\n");
 
-                // Singleton Service Object
                 EmployeePayrollService payrollService =
                         EmployeePayrollService.getInstance();
 
-                // ==================================================
-                // UC2 : Retrieve All Employee Payroll Records
-                // ==================================================
+                // ==========================================
+                // UC2 : Retrieve Employee Payroll Records
+                // ==========================================
 
                 System.out.println("Employee Payroll Records");
                 System.out.println("------------------------");
@@ -64,9 +64,9 @@ public class Main {
 
                 employeeList.forEach(System.out::println);
 
-                // ==================================================
+                // ==========================================
                 // UC3 & UC4 : Update Employee Salary
-                // ==================================================
+                // ==========================================
 
                 System.out.println("\nUpdating Terisa's Salary...");
                 System.out.println("---------------------------");
@@ -87,9 +87,9 @@ public class Main {
                     System.out.println("Salary Update Failed.");
                 }
 
-                // ==================================================
+                // ==========================================
                 // UC5 : Retrieve Employees by Date Range
-                // ==================================================
+                // ==========================================
 
                 System.out.println("\nEmployees Joined Between 2018-01-01 and Today");
                 System.out.println("---------------------------------------------");
@@ -101,9 +101,9 @@ public class Main {
 
                 employees.forEach(System.out::println);
 
-                // ==================================================
-                // UC6 : Payroll Statistics by Gender
-                // ==================================================
+                // ==========================================
+                // UC6 : Payroll Statistics
+                // ==========================================
 
                 System.out.println("\nPayroll Statistics By Gender");
                 System.out.println("----------------------------");
@@ -112,9 +112,9 @@ public class Main {
                         .getPayrollStatisticsByGender()
                         .forEach(System.out::println);
 
-                // ==================================================
-                // UC7 : Add New Employee
-                // ==================================================
+                // ==========================================
+                // UC7, UC8 & UC9 : Add New Employee
+                // ==========================================
 
                 System.out.println("\nAdding New Employee");
                 System.out.println("-------------------");
@@ -130,7 +130,7 @@ public class Main {
 
                                 LocalDate.now(),
 
-                                1        // Department Id
+                                List.of(1, 2)
 
                         );
 
@@ -145,7 +145,6 @@ public class Main {
                     System.out.println("Unable to Add Employee.");
                 }
 
-                // Close Database Connection
                 connection.close();
 
                 System.out.println("\nDatabase Connection Closed.");

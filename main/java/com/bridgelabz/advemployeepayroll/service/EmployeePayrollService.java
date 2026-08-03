@@ -66,59 +66,87 @@ public class EmployeePayrollService {
             connection = DBConnection.getConnection();
 
             String employeeByNameQuery = """
-                    SELECT
-                        e.employee_id,
-                        e.name,
-                        p.basic_pay,
-                        e.start_date
-                    FROM employee e
-                    JOIN payroll p
+                SELECT
+                    e.employee_id,
+                    e.name,
+                    e.gender,
+                    e.start_date,
+                    p.basic_pay,
+                    p.deductions,
+                    p.taxable_pay,
+                    p.income_tax,
+                    p.net_pay,
+                    d.department_name
+                FROM employee e
+                JOIN payroll p
                     ON e.employee_id = p.employee_id
-                    WHERE e.name = ?
-                    """;
+                LEFT JOIN employee_department ed
+                    ON e.employee_id = ed.employee_id
+                LEFT JOIN department d
+                    ON ed.department_id = d.department_id
+                WHERE e.name = ?
+                ORDER BY d.department_name
+                """;
+
+            employeeByNameStatement =
+                    connection.prepareStatement(employeeByNameQuery);
 
             String employeeByDateRangeQuery = """
-        SELECT
-            e.employee_id,
-            e.name,
-            p.basic_pay,
-            e.start_date
-        FROM employee e
-        JOIN payroll p
-        ON e.employee_id = p.employee_id
-        WHERE e.start_date BETWEEN ? AND ?
-        ORDER BY e.start_date
-        """;
+                SELECT
+                    e.employee_id,
+                    e.name,
+                    e.gender,
+                    e.start_date,
+                    p.basic_pay,
+                    p.deductions,
+                    p.taxable_pay,
+                    p.income_tax,
+                    p.net_pay,
+                    d.department_name
+                FROM employee e
+                JOIN payroll p
+                    ON e.employee_id = p.employee_id
+                LEFT JOIN employee_department ed
+                    ON e.employee_id = ed.employee_id
+                LEFT JOIN department d
+                    ON ed.department_id = d.department_id
+                WHERE e.start_date BETWEEN ? AND ?
+                ORDER BY e.employee_id
+                """;
+
+            employeeByDateRangeStatement =
+                    connection.prepareStatement(employeeByDateRangeQuery);
 
             String statisticsQuery = """
-        SELECT
-            e.gender,
-            SUM(p.basic_pay) AS total_salary,
-            AVG(p.basic_pay) AS average_salary,
-            MIN(p.basic_pay) AS minimum_salary,
-            MAX(p.basic_pay) AS maximum_salary,
-            COUNT(*) AS employee_count
-        FROM employee e
-        JOIN payroll p
-        ON e.employee_id = p.employee_id
-        GROUP BY e.gender
-        ORDER BY e.gender
-        """;
+                SELECT
+                    e.gender,
+                    SUM(p.basic_pay) total_salary,
+                    AVG(p.basic_pay) average_salary,
+                    MIN(p.basic_pay) minimum_salary,
+                    MAX(p.basic_pay) maximum_salary,
+                    COUNT(*) employee_count
+                FROM employee e
+                JOIN payroll p
+                    ON e.employee_id = p.employee_id
+                GROUP BY e.gender
+                ORDER BY e.gender
+                """;
 
             payrollStatisticsStatement =
                     connection.prepareStatement(statisticsQuery);
 
-//            employeeByDateRangeStatement =
-//                    connection.prepareStatement(employeeByDateRangeQuery);
-
-//            employeeByNameStatement =
-//                    connection.prepareStatement(employeeByNameQuery);
-
         } catch (SQLException e) {
+
             e.printStackTrace();
         }
     }
 
+
+    /**
+     * Retrieves all employee payroll records.
+     *
+     * @return List of EmployeePayroll objects
+     */
     /**
      * Retrieves all employee payroll records.
      *
@@ -130,27 +158,58 @@ public class EmployeePayrollService {
                 new ArrayList<>();
 
         String sql = """
-                SELECT
-                    e.employee_id,
-                    e.name,
-                    p.basic_pay,
-                    e.start_date
-                FROM employee e
-                JOIN payroll p
+            SELECT
+                e.employee_id,
+                e.name,
+                e.gender,
+                e.start_date,
+                p.basic_pay,
+                p.deductions,
+                p.taxable_pay,
+                p.income_tax,
+                p.net_pay,
+                d.department_name
+            FROM employee e
+            JOIN payroll p
                 ON e.employee_id = p.employee_id
-                ORDER BY e.employee_id
-                """;
+            LEFT JOIN employee_department ed
+                ON e.employee_id = ed.employee_id
+            LEFT JOIN department d
+                ON ed.department_id = d.department_id
+            ORDER BY e.employee_id
+            """;
 
         try (PreparedStatement statement =
                      connection.prepareStatement(sql);
              ResultSet resultSet =
                      statement.executeQuery()) {
 
+            EmployeePayroll employee = null;
+            int previousEmployeeId = -1;
+
             while (resultSet.next()) {
 
-                employeeList.add(
-                        getEmployeePayrollData(resultSet)
-                );
+                int currentEmployeeId =
+                        resultSet.getInt("employee_id");
+
+                if (employee == null ||
+                        currentEmployeeId != previousEmployeeId) {
+
+                    employee =
+                            getEmployeePayrollData(resultSet);
+
+                    employeeList.add(employee);
+
+                    previousEmployeeId =
+                            currentEmployeeId;
+                }
+
+                String department =
+                        resultSet.getString("department_name");
+
+                if (department != null) {
+                    employee.addDepartment(department);
+                }
             }
 
         } catch (SQLException e) {
@@ -167,6 +226,12 @@ public class EmployeePayrollService {
      * @param name employee name
      * @return EmployeePayroll object
      */
+    /**
+     * Retrieves employee by name.
+     *
+     * @param name employee name
+     * @return EmployeePayroll object
+     */
     public EmployeePayroll getEmployeeByName(String name) {
 
         try {
@@ -176,14 +241,33 @@ public class EmployeePayrollService {
             ResultSet resultSet =
                     employeeByNameStatement.executeQuery();
 
-            if (resultSet.next()) {
+            EmployeePayroll employee = null;
 
-                return getEmployeePayrollData(resultSet);
+            while (resultSet.next()) {
 
+                if (employee == null) {
+
+                    employee =
+                            getEmployeePayrollData(resultSet);
+
+                }
+
+                String department =
+                        resultSet.getString("department_name");
+
+                if (department != null) {
+
+                    employee.addDepartment(department);
+
+                }
             }
 
+            return employee;
+
         } catch (SQLException e) {
+
             e.printStackTrace();
+
         }
 
         return null;
@@ -265,22 +349,41 @@ public class EmployeePayrollService {
      * @return EmployeePayroll object
      * @throws SQLException if ResultSet access fails
      */
-    private EmployeePayroll getEmployeePayrollData(
-            ResultSet resultSet)
+    private EmployeePayroll getEmployeePayrollData(ResultSet rs)
             throws SQLException {
 
-        return new EmployeePayroll(
+        EmployeePayroll employee =
+                new EmployeePayroll(
 
-                resultSet.getInt("employee_id"),
+                        rs.getInt("employee_id"),
 
-                resultSet.getString("name"),
+                        rs.getString("name"),
 
-                resultSet.getDouble("basic_pay"),
+                        rs.getDouble("basic_pay"),
 
-                resultSet.getDate("start_date")
-                        .toLocalDate()
+                        rs.getDate("start_date").toLocalDate()
 
-        );
+                );
+
+        employee.setGender(
+                rs.getString("gender").charAt(0));
+
+        employee.setBasicPay(
+                rs.getDouble("basic_pay"));
+
+        employee.setDeductions(
+                rs.getDouble("deductions"));
+
+        employee.setTaxablePay(
+                rs.getDouble("taxable_pay"));
+
+        employee.setIncomeTax(
+                rs.getDouble("income_tax"));
+
+        employee.setNetPay(
+                rs.getDouble("net_pay"));
+
+        return employee;
     }
 
 
@@ -462,12 +565,15 @@ public class EmployeePayrollService {
         }
     }
 
+    /**
+     * Adds a new employee into the Payroll Service.
+     */
     public EmployeePayroll addEmployee(
             String name,
             char gender,
             double basicPay,
             LocalDate startDate,
-            int departmentId) {
+            List<Integer> departmentIds) {
 
         try {
 
@@ -483,9 +589,13 @@ public class EmployeePayrollService {
                     employeeId,
                     basicPay);
 
-            addEmployeeDepartment(
-                    employeeId,
-                    departmentId);
+            // Employee can belong to multiple departments
+            for (Integer departmentId : departmentIds) {
+
+                addEmployeeDepartment(
+                        employeeId,
+                        departmentId);
+            }
 
             connection.commit();
 
@@ -498,7 +608,7 @@ public class EmployeePayrollService {
                 connection.rollback();
 
                 System.out.println(
-                        "Transaction rolled back.");
+                        "Transaction Rolled Back.");
 
             } catch (SQLException ex) {
 
