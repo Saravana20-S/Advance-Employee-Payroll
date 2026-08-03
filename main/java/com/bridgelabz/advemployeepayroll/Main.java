@@ -145,6 +145,25 @@ public class Main {
                     System.out.println("Unable to Add Employee.");
                 }
 
+
+                //JDBC-UC12:
+                System.out.println("\nRemoving Employee");
+                System.out.println("-----------------");
+
+                boolean removed =
+                        payrollService.removeEmployee("Rahul");
+
+                if (removed) {
+
+                    System.out.println(
+                            "Employee Removed Successfully.");
+
+                } else {
+
+                    System.out.println(
+                            "Unable to Remove Employee.");
+                }
+
                 connection.close();
 
                 System.out.println("\nDatabase Connection Closed.");

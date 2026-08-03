@@ -34,6 +34,9 @@ public class EmployeePayrollService {
 
     private PreparedStatement payrollStatisticsStatement;
 
+    private final List<EmployeePayroll> employeePayrollList =
+            new ArrayList<>();
+
     /**
      * Private constructor.
      */
@@ -533,6 +536,48 @@ public class EmployeePayrollService {
 
             statement.executeUpdate();
         }
+    }
+
+
+    /**
+     * Soft deletes an employee by setting is_active to false.
+     *
+     * @param employeeName employee name
+     * @return true if employee removed successfully
+     */
+    public boolean removeEmployee(String employeeName) {
+
+        String sql = """
+            UPDATE employee
+            SET is_active = FALSE
+            WHERE name = ?
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setString(1, employeeName);
+
+            int rowsAffected =
+                    statement.executeUpdate();
+
+            if (rowsAffected > 0) {
+
+                employeePayrollList.removeIf(
+                        employee ->
+                                employee.getName()
+                                        .equalsIgnoreCase(employeeName));
+
+                return true;
+            }
+
+        } catch (SQLException e) {
+
+            e.printStackTrace();
+
+        }
+
+        return false;
     }
 
 

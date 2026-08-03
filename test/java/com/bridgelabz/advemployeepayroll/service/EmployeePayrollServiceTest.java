@@ -127,4 +127,18 @@ class EmployeePayrollServiceTest {
         Assertions.assertTrue(
                 payrollService.checkEmployeePayrollInSync(employee));
     }
+
+    @Test
+    void givenEmployee_WhenRemoved_ShouldNotBeAvailable() {
+
+        boolean removed =
+                payrollService.removeEmployee("Rahul");
+
+        Assertions.assertTrue(removed);
+
+        EmployeePayroll employee =
+                payrollService.getEmployeeByName("Rahul");
+
+        Assertions.assertNull(employee);
+    }
 }
