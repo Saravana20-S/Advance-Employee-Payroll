@@ -72,6 +72,14 @@ public class Main {
 
                 employees.forEach(System.out::println);
 
+
+                System.out.println("\nPayroll Statistics By Gender");
+                System.out.println("----------------------------");
+
+                payrollService
+                        .getPayrollStatisticsByGender()
+                        .forEach(System.out::println);
+
                 // =============================
                 // UC3 & UC4 : Update Salary
                 // =============================

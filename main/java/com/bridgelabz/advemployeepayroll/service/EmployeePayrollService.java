@@ -1,6 +1,7 @@
 package com.bridgelabz.advemployeepayroll.service;
 
 import com.bridgelabz.advemployeepayroll.model.EmployeePayroll;
+import com.bridgelabz.advemployeepayroll.model.PayrollStatistics;
 import com.bridgelabz.advemployeepayroll.util.DBConnection;
 
 import java.sql.Connection;
@@ -33,6 +34,8 @@ public class EmployeePayrollService {
 
     // Cached PreparedStatement to retrieve employees by date range
     private PreparedStatement employeeByDateRangeStatement;
+
+    private PreparedStatement payrollStatisticsStatement;
 
     /**
      * Private constructor.
@@ -90,8 +93,26 @@ public class EmployeePayrollService {
         ORDER BY e.start_date
         """;
 
-            employeeByDateRangeStatement =
-                    connection.prepareStatement(employeeByDateRangeQuery);
+            String statisticsQuery = """
+        SELECT
+            e.gender,
+            SUM(p.basic_pay) AS total_salary,
+            AVG(p.basic_pay) AS average_salary,
+            MIN(p.basic_pay) AS minimum_salary,
+            MAX(p.basic_pay) AS maximum_salary,
+            COUNT(*) AS employee_count
+        FROM employee e
+        JOIN payroll p
+        ON e.employee_id = p.employee_id
+        GROUP BY e.gender
+        ORDER BY e.gender
+        """;
+
+            payrollStatisticsStatement =
+                    connection.prepareStatement(statisticsQuery);
+
+//            employeeByDateRangeStatement =
+//                    connection.prepareStatement(employeeByDateRangeQuery);
 
 //            employeeByNameStatement =
 //                    connection.prepareStatement(employeeByNameQuery);
@@ -308,6 +329,49 @@ public class EmployeePayrollService {
         }
 
         return employeeList;
+    }
+
+    /**
+     * Retrieves payroll statistics
+     * grouped by gender.
+     *
+     * @return list of payroll statistics
+     */
+    public List<PayrollStatistics> getPayrollStatisticsByGender() {
+
+        List<PayrollStatistics> statistics =
+                new ArrayList<>();
+
+        try (ResultSet resultSet =
+                     payrollStatisticsStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+
+                statistics.add(
+
+                        new PayrollStatistics(
+
+                                resultSet.getString("gender").charAt(0),
+
+                                resultSet.getDouble("total_salary"),
+
+                                resultSet.getDouble("average_salary"),
+
+                                resultSet.getDouble("minimum_salary"),
+
+                                resultSet.getDouble("maximum_salary"),
+
+                                resultSet.getInt("employee_count")
+
+                        )
+                );
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return statistics;
     }
 
 }

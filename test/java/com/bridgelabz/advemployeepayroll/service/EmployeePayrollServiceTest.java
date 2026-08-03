@@ -1,8 +1,11 @@
 package com.bridgelabz.advemployeepayroll.service;
 
 import com.bridgelabz.advemployeepayroll.model.EmployeePayroll;
+import com.bridgelabz.advemployeepayroll.model.PayrollStatistics;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 /**
  * Test class for EmployeePayrollService.
@@ -35,5 +38,16 @@ class EmployeePayrollServiceTest {
         Assertions.assertTrue(
                 payrollService.checkEmployeePayrollInSync(employee)
         );
+    }
+
+    @Test
+    void givenPayrollData_WhenGroupedByGender_ShouldReturnStatistics() {
+
+        List<PayrollStatistics> statistics =
+                payrollService.getPayrollStatisticsByGender();
+
+        Assertions.assertFalse(((List<?>) statistics).isEmpty());
+
+        Assertions.assertEquals(2, statistics.size());
     }
 }
