@@ -31,3 +31,11 @@ FROM employee_payroll
 WHERE start_date BETWEEN
       CAST('2018-01-01' AS DATE)
       AND CURRENT_DATE;
+
+
+-- Refactor UC12
+SELECT e.name, p.basic_pay
+FROM employee e
+JOIN payroll p
+ON e.employee_id = p.employee_id
+WHERE e.name = 'Bill';
