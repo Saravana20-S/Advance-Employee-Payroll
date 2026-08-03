@@ -1,0 +1,47 @@
+                    +----------------------+
+                    |       Employee       |
+                    +----------------------+
+                    | employee_id (PK)     |
+                    | name                 |
+                    | gender               |
+                    | phone                |
+                    | address              |
+                    | start_date           |
+                    +----------+-----------+
+                               |
+                               | 1
+                               |
+                               | M
+                    +----------v-----------+
+                    |       Payroll        |
+                    +----------------------+
+                    | payroll_id (PK)      |
+                    | employee_id (FK)     |
+                    | basic_pay            |
+                    | deductions           |
+                    | taxable_pay          |
+                    | income_tax           |
+                    | net_pay              |
+                    +----------------------+
+
+                               |
+                               | M
+                               |
+                               | M
+                    +----------v-----------+
+                    | EmployeeDepartment   |
+                    +----------------------+
+                    | employee_id (FK)     |
+                    | department_id (FK)   |
+                    +----------+-----------+
+                               |
+                               |
+                               | M
+                               |
+                               | 1
+                    +----------v-----------+
+                    |     Department       |
+                    +----------------------+
+                    | department_id (PK)   |
+                    | department_name      |
+                    +----------------------+
