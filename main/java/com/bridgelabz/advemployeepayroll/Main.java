@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Main class to test PostgreSQL JDBC connectivity
- * and retrieve employee payroll records.
+ * and Employee Payroll operations.
  */
 public class Main {
 
@@ -23,14 +23,16 @@ public class Main {
 
         try {
 
-            // Load PostgreSQL JDBC Driver
+            // Load PostgreSQL Driver
             Class.forName("org.postgresql.Driver");
+
             System.out.println("PostgreSQL Driver Loaded Successfully.\n");
 
-            // Display all registered JDBC drivers
+            // Display Registered JDBC Drivers
             System.out.println("Registered JDBC Drivers:");
 
-            Enumeration<Driver> drivers = DriverManager.getDrivers();
+            Enumeration<Driver> drivers =
+                    DriverManager.getDrivers();
 
             while (drivers.hasMoreElements()) {
                 System.out.println(drivers.nextElement());
@@ -38,58 +40,64 @@ public class Main {
 
             System.out.println();
 
-            // Establish database connection
             Connection connection = DBConnection.getConnection();
 
             if (connection != null) {
 
-                System.out.println(
-                        "\nConnected Successfully to payroll_service database.\n");
-
-                // ==============================
-                // UC2 : Retrieve Employee Payroll Data
-                // ==============================
+                System.out.println("Connected Successfully.\n");
 
                 EmployeePayrollService payrollService =
-                        new EmployeePayrollService();
+                        EmployeePayrollService.getInstance();
 
-                List<EmployeePayroll> employeePayrollList =
-                        payrollService.getEmployeePayrollList("Terisa");
+                // =============================
+                // UC2 : Read Employee Payroll
+                // =============================
+
+                List<EmployeePayroll> employeeList =
+                        payrollService.getEmployeePayrollList();
 
                 System.out.println("Employee Payroll Records");
-                System.out.println("-------------------------");
+                System.out.println("------------------------");
 
-                employeePayrollList.forEach(System.out::println);
+                employeeList.forEach(System.out::println);
 
+                // =============================
+                // UC3 & UC4 : Update Salary
+                // =============================
 
-                payrollService = new EmployeePayrollService();
-
-                boolean updated =
+                EmployeePayroll employee =
                         payrollService.updateEmployeeSalary(
                                 "Terisa",
                                 3000000.00);
 
-                if (updated) {
-                    System.out.println("Salary updated successfully.");
+                if (employee != null) {
+
+                    System.out.println("\nSalary Updated Successfully\n");
+
+                    System.out.println(employee);
+
                 } else {
-                    System.out.println("Salary update failed.");
+
+                    System.out.println("\nSalary Update Failed");
+
                 }
 
-                // Close database connection
                 connection.close();
 
-                System.out.println(
-                        "\nDatabase Connection Closed.");
+                System.out.println("\nDatabase Connection Closed.");
+
             }
 
         } catch (ClassNotFoundException e) {
 
-            System.out.println("PostgreSQL Driver Not Found.");
+            System.out.println("Driver Not Found.");
 
         } catch (SQLException e) {
 
-            System.out.println("Database Connection Failed.");
             e.printStackTrace();
+
         }
+
     }
+
 }

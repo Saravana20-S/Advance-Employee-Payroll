@@ -12,88 +12,136 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service class responsible for payroll database operations.
+ * Service class responsible for all Employee Payroll
+ * database operations.
+ *
+ * This class is implemented as a Singleton so that
+ * the database connection and PreparedStatements are
+ * created only once and reused throughout the program.
  */
 public class EmployeePayrollService {
 
+    // Singleton Instance
+    private static EmployeePayrollService payrollService;
+
+    // Cached database connection
+    private Connection connection;
+
+    // Cached PreparedStatement
+    private PreparedStatement employeeByNameStatement;
+
     /**
-     * Retrieves all employee payroll records
-     * from the database.
-     *
-     * @return list of employee payroll objects
+     * Private constructor.
      */
-    public List<EmployeePayroll> getEmployeePayrollList(String terisa) {
+    private EmployeePayrollService() {
+        prepareStatements();
+    }
+
+    /**
+     * Returns Singleton instance.
+     *
+     * @return EmployeePayrollService object
+     */
+    public static EmployeePayrollService getInstance() {
+
+        if (payrollService == null) {
+            payrollService = new EmployeePayrollService();
+        }
+
+        return payrollService;
+    }
+
+    /**
+     * Creates database connection and caches
+     * PreparedStatements.
+     */
+    private void prepareStatements() {
+
+        try {
+
+            connection = DBConnection.getConnection();
+
+            String employeeByNameQuery = """
+                    SELECT
+                        e.employee_id,
+                        e.name,
+                        p.basic_pay,
+                        e.start_date
+                    FROM employee e
+                    JOIN payroll p
+                    ON e.employee_id = p.employee_id
+                    WHERE e.name = ?
+                    """;
+
+            employeeByNameStatement =
+                    connection.prepareStatement(employeeByNameQuery);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Retrieves all employee payroll records.
+     *
+     * @return List of EmployeePayroll objects
+     */
+    public List<EmployeePayroll> getEmployeePayrollList() {
 
         List<EmployeePayroll> employeeList =
                 new ArrayList<>();
 
-        String query =
-                "SELECT id, name, salary, start_date FROM employee_payroll";
+        String sql = """
+                SELECT
+                    e.employee_id,
+                    e.name,
+                    p.basic_pay,
+                    e.start_date
+                FROM employee e
+                JOIN payroll p
+                ON e.employee_id = p.employee_id
+                ORDER BY e.employee_id
+                """;
 
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement =
-                     connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql);
+             ResultSet resultSet =
+                     statement.executeQuery()) {
 
             while (resultSet.next()) {
 
-                EmployeePayroll employee =
-                        new EmployeePayroll(
-
-                                resultSet.getInt("id"),
-
-                                resultSet.getString("name"),
-
-                                resultSet.getDouble("salary"),
-
-                                resultSet.getDate("start_date")
-                                        .toLocalDate()
-                        );
-
-                employeeList.add(employee);
+                employeeList.add(
+                        getEmployeePayrollData(resultSet)
+                );
             }
 
         } catch (SQLException e) {
-
-            System.out.println("Unable to retrieve employee payroll data.");
-
             e.printStackTrace();
         }
 
         return employeeList;
     }
 
-
+    /**
+     * Retrieves employee by name using the
+     * cached PreparedStatement.
+     *
+     * @param name employee name
+     * @return EmployeePayroll object
+     */
     public EmployeePayroll getEmployeeByName(String name) {
 
-        String sql = """
-            SELECT
-                e.employee_id,
-                e.name,
-                p.basic_pay,
-                e.start_date
-            FROM employee e
-            JOIN payroll p
-            ON e.employee_id = p.employee_id
-            WHERE e.name = ?
-            """;
+        try {
 
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement preparedStatement =
-                     connection.prepareStatement(sql)) {
+            employeeByNameStatement.setString(1, name);
 
-            preparedStatement.setString(1, name);
+            ResultSet resultSet =
+                    employeeByNameStatement.executeQuery();
 
-            ResultSet rs = preparedStatement.executeQuery();
+            if (resultSet.next()) {
 
-            if (rs.next()) {
+                return getEmployeePayrollData(resultSet);
 
-                return new EmployeePayroll(
-                        rs.getInt("employee_id"),
-                        rs.getString("name"),
-                        rs.getDouble("basic_pay"),
-                        rs.getDate("start_date").toLocalDate()
-                );
             }
 
         } catch (SQLException e) {
@@ -103,31 +151,39 @@ public class EmployeePayrollService {
         return null;
     }
 
-
-    public EmployeePayroll updateEmployeeSalary(String employeeName,
-                                                double basicPay) {
+    /**
+     * Updates employee basic pay using
+     * JDBC PreparedStatement.
+     *
+     * @param employeeName employee name
+     * @param basicPay updated salary
+     * @return Updated EmployeePayroll object
+     */
+    public EmployeePayroll updateEmployeeSalary(
+            String employeeName,
+            double basicPay) {
 
         String sql = """
-            UPDATE payroll
-            SET basic_pay=?
-            WHERE employee_id=
-            (
-                SELECT employee_id
-                FROM employee
-                WHERE name=?
-            )
-            """;
+                UPDATE payroll
+                SET basic_pay = ?
+                WHERE employee_id =
+                (
+                    SELECT employee_id
+                    FROM employee
+                    WHERE name = ?
+                )
+                """;
 
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement ps =
+        try (PreparedStatement preparedStatement =
                      connection.prepareStatement(sql)) {
 
-            ps.setDouble(1, basicPay);
-            ps.setString(2, employeeName);
+            preparedStatement.setDouble(1, basicPay);
+            preparedStatement.setString(2, employeeName);
 
-            int rows = ps.executeUpdate();
+            int rowsAffected =
+                    preparedStatement.executeUpdate();
 
-            if (rows > 0) {
+            if (rowsAffected > 0) {
 
                 return getEmployeeByName(employeeName);
 
@@ -141,13 +197,14 @@ public class EmployeePayrollService {
     }
 
     /**
-     * Checks whether the employee object's salary
-     * is synchronized with the database.
+     * Checks whether EmployeePayroll object
+     * and database are synchronized.
      *
      * @param employee EmployeePayroll object
-     * @return true if object and database values match
+     * @return true if synchronized
      */
-    public boolean checkEmployeePayrollInSync(EmployeePayroll employee) {
+    public boolean checkEmployeePayrollInSync(
+            EmployeePayroll employee) {
 
         EmployeePayroll employeeFromDB =
                 getEmployeeByName(employee.getName());
@@ -161,4 +218,31 @@ public class EmployeePayrollService {
                 employeeFromDB.getBasicPay()
         ) == 0;
     }
+
+    /**
+     * Creates EmployeePayroll object from
+     * current ResultSet row.
+     *
+     * @param resultSet database ResultSet
+     * @return EmployeePayroll object
+     * @throws SQLException if ResultSet access fails
+     */
+    private EmployeePayroll getEmployeePayrollData(
+            ResultSet resultSet)
+            throws SQLException {
+
+        return new EmployeePayroll(
+
+                resultSet.getInt("employee_id"),
+
+                resultSet.getString("name"),
+
+                resultSet.getDouble("basic_pay"),
+
+                resultSet.getDate("start_date")
+                        .toLocalDate()
+
+        );
+    }
+
 }

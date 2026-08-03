@@ -10,21 +10,28 @@ import org.junit.jupiter.api.Test;
 class EmployeePayrollServiceTest {
 
     private final EmployeePayrollService payrollService =
-            new EmployeePayrollService();
+            EmployeePayrollService.getInstance();
 
+    /**
+     * UC4 :
+     * Update employee salary using PreparedStatement
+     * and verify synchronization with database.
+     */
     @Test
-    void givenNewSalary_WhenUpdated_ShouldSyncWithDatabase() {
+    void givenUpdatedSalary_WhenSalaryUpdated_ShouldSyncWithDatabase() {
 
-        // Update Terisa's salary
         EmployeePayroll employee =
                 payrollService.updateEmployeeSalary(
                         "Terisa",
                         3000000.00);
 
-        // Verify update was successful
         Assertions.assertNotNull(employee);
 
-        // Verify the object is synchronized with the database
+        Assertions.assertEquals(
+                3000000.00,
+                employee.getBasicPay()
+        );
+
         Assertions.assertTrue(
                 payrollService.checkEmployeePayrollInSync(employee)
         );
