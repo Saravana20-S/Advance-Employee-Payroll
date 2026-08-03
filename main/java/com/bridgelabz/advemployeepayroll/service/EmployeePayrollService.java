@@ -484,14 +484,17 @@ public class EmployeePayrollService {
             throws SQLException {
 
         String sql = """
-            INSERT INTO employee(name, gender, start_date)
-            VALUES (?, ?, ?)
+            INSERT INTO employee(
+                name,
+                gender,
+                start_date)
+            VALUES(?,?,?)
             """;
 
         try (PreparedStatement statement =
                      connection.prepareStatement(
                              sql,
-                             PreparedStatement.RETURN_GENERATED_KEYS)) {
+                             Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, name);
             statement.setString(2, String.valueOf(gender));
@@ -503,11 +506,12 @@ public class EmployeePayrollService {
                     statement.getGeneratedKeys();
 
             if (generatedKeys.next()) {
+
                 return generatedKeys.getInt(1);
             }
         }
 
-        return -1;
+        return 0;
     }
 
     private void addEmployeeDepartment(int employeeId,
@@ -515,7 +519,9 @@ public class EmployeePayrollService {
             throws SQLException {
 
         String sql = """
-            INSERT INTO employee_department(employee_id,department_id)
+            INSERT INTO employee_department(
+                employee_id,
+                department_id)
             VALUES(?,?)
             """;
 
@@ -568,28 +574,44 @@ public class EmployeePayrollService {
     /**
      * Adds a new employee into the Payroll Service.
      */
-    public EmployeePayroll addEmployee(
-            String name,
-            char gender,
-            double basicPay,
-            LocalDate startDate,
-            List<Integer> departmentIds) {
+    /**
+     * Adds a new employee into the Payroll Service.
+     * All database operations are executed within a single transaction.
+     *
+     * @param name Employee name
+     * @param gender Employee gender
+     * @param basicPay Employee basic pay
+     * @param startDate Joining date
+     * @param departmentIds Departments assigned to the employee
+     * @return EmployeePayroll object if successful, otherwise null
+     */
+    public EmployeePayroll addEmployee(String name,
+                                       char gender,
+                                       double basicPay,
+                                       LocalDate startDate,
+                                       List<Integer> departmentIds) {
 
         try {
 
             connection.setAutoCommit(false);
 
+            // Insert Employee
             int employeeId =
                     addEmployeeDetails(
                             name,
                             gender,
                             startDate);
 
+            if (employeeId == 0) {
+                throw new SQLException("Unable to insert employee.");
+            }
+
+            // Insert Payroll Details
             addPayrollDetails(
                     employeeId,
                     basicPay);
 
-            // Employee can belong to multiple departments
+            // Insert Employee Departments
             for (Integer departmentId : departmentIds) {
 
                 addEmployeeDepartment(
@@ -597,7 +619,11 @@ public class EmployeePayrollService {
                         departmentId);
             }
 
+            // Commit only after all inserts succeed
             connection.commit();
+
+            System.out.println(
+                    "Transaction Committed Successfully.");
 
             return getEmployeeByName(name);
 
@@ -613,7 +639,6 @@ public class EmployeePayrollService {
             } catch (SQLException ex) {
 
                 ex.printStackTrace();
-
             }
 
             e.printStackTrace();
@@ -627,9 +652,7 @@ public class EmployeePayrollService {
             } catch (SQLException e) {
 
                 e.printStackTrace();
-
             }
-
         }
 
         return null;

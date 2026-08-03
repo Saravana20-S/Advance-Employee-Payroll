@@ -107,24 +107,16 @@ class EmployeePayrollServiceTest {
                 statistics.isEmpty());
     }
 
-
     @Test
     void givenNewEmployee_WhenAdded_ShouldSyncWithDatabase() {
 
         EmployeePayroll employee =
                 payrollService.addEmployee(
-
-                        "Kumar",
-
+                        "Arun",
                         'M',
-
-                        6000000,
-
+                        5500000,
                         LocalDate.now(),
-
-                        List.of(1,2)
-
-                );
+                        List.of(1, 2));
 
         Assertions.assertNotNull(employee);
 
@@ -133,7 +125,6 @@ class EmployeePayrollServiceTest {
                 employee.getDepartments().size());
 
         Assertions.assertTrue(
-                payrollService
-                        .checkEmployeePayrollInSync(employee));
+                payrollService.checkEmployeePayrollInSync(employee));
     }
 }
